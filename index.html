@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Planetary Digital Twin | Live Weather, Hurricanes & Natural Disasters</title>
+  <meta name="description" content="Live 3D planetary digital twin using ArcGIS 3D globe, Open-Meteo, USGS Earthquakes, NASA EONET, and NOAA/NHC/Joint Typhoon Warning Center feeds via Living Atlas." />
+  <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/dark/main.css" />
+  <link rel="stylesheet" href="./styles.css" />
+  <script src="https://js.arcgis.com/4.30/"></script>
+</head>
+<body>
+  <div id="appShell">
+    <header class="topbar glass">
+      <div class="brand">
+        <div class="brandIcon">🌐</div>
+        <div>
+          <div class="eyebrow">DIGITAL TWIN EARTH SYSTEMS</div>
+          <h1>Planetary Digital Twin: Live Weather, Hurricanes & Natural Disasters</h1>
+        </div>
+      </div>
+      <div class="topStatus">
+        <span id="utcClock">--:-- UTC</span>
+        <span class="liveDot"></span><span>LIVE APIs</span>
+        <button id="refreshBtn" class="pillBtn">Refresh Data</button>
+      </div>
+    </header>
+
+    <main class="dashboard">
+      <aside class="leftRail panelRail">
+        <section class="panel glass">
+          <div class="panelTitle"><span>🌀</span> Active Tropical Cyclones</div>
+          <div class="bigMetric" id="cycloneCount">Loading</div>
+          <p class="smallText">NOAA/NHC + JTWC Living Atlas layer. Tracks appear on the 3D globe when active.</p>
+          <div id="cycloneList" class="list compact"></div>
+        </section>
+
+        <section class="panel glass">
+          <div class="panelTitle"><span>🌧️</span> Global Weather Watch</div>
+          <div class="metricGrid">
+            <div><b id="rainCity">--</b><small>Wettest sample</small></div>
+            <div><b id="windCity">--</b><small>Highest wind</small></div>
+          </div>
+          <div id="weatherList" class="list"></div>
+        </section>
+
+        <section class="panel glass">
+          <div class="panelTitle"><span>🌎</span> Earthquakes - USGS 24h</div>
+          <div class="metricGrid">
+            <div><b id="eqCount">--</b><small>M2.5+ events</small></div>
+            <div><b id="eqMax">--</b><small>Largest magnitude</small></div>
+          </div>
+          <div id="eqList" class="list compact"></div>
+        </section>
+      </aside>
+
+      <section class="mapStage glass">
+        <div id="viewDiv"></div>
+        <div class="mapOverlay topLeft">
+          <button class="modeBtn active" id="globeBtn">3D Globe</button>
+          <button class="modeBtn" id="homeBtn">Home View</button>
+          <button class="modeBtn" id="rotateBtn">Auto Rotate</button>
+        </div>
+        <div class="mapOverlay bottomLegend">
+          <span><i class="legendDot hurricane"></i> Cyclones</span>
+          <span><i class="legendDot quake"></i> Earthquakes</span>
+          <span><i class="legendDot event"></i> NASA EONET hazards</span>
+          <span><i class="legendDot weather"></i> Live weather points</span>
+          <span><i class="legendLine"></i> Atmosphere / clouds / terrain</span>
+        </div>
+      </section>
+
+      <aside class="rightRail panelRail">
+        <section class="panel glass alertPanel">
+          <div class="panelTitle"><span>🚨</span> Live Disaster Alerts</div>
+          <div class="bigMetric danger" id="alertCount">--</div>
+          <p class="smallText">Open NASA EONET events: wildfires, severe storms, volcanoes, floods, sea/lake ice, and other natural hazards.</p>
+          <div id="eventList" class="list"></div>
+        </section>
+
+        <section class="panel glass">
+          <div class="panelTitle"><span>🤖</span> AI Hazard Triage</div>
+          <div id="aiInsight" class="insightBox">Loading live hazard signals...</div>
+          <div class="confidence"><span>Confidence</span><b id="confidenceScore">--</b></div>
+          <div class="bar"><span id="confidenceBar"></span></div>
+        </section>
+
+        <section class="panel glass">
+          <div class="panelTitle"><span>📡</span> Data Connections</div>
+          <div id="connectionList" class="connectionList"></div>
+        </section>
+      </aside>
+    </main>
+
+    <footer class="footer glass">
+      <span>Sources: Open-Meteo Forecast API · USGS Earthquake GeoJSON · NASA EONET v3 · NOAA/NHC & JTWC via ArcGIS Living Atlas</span>
+      <span id="lastUpdated">Last updated: --</span>
+    </footer>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
