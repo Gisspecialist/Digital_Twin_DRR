@@ -1,7 +1,59 @@
-services:
-  - type: web
-    name: planetary-digital-twin-weather-real
-    env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
-    plan: free
+{
+  "basemaps": [
+    {"id":"satellite","label":"Satellite Imagery"},
+    {"id":"hybrid","label":"Imagery Hybrid"},
+    {"id":"topo-vector","label":"Topographic"},
+    {"id":"streets-vector","label":"Streets"},
+    {"id":"oceans","label":"Oceans"},
+    {"id":"terrain","label":"Terrain"},
+    {"id":"dark-gray-vector","label":"Dark Gray"},
+    {"id":"gray-vector","label":"Light Gray"}
+  ],
+  "operationalLayers": [
+    {
+      "id":"nhcTropicalWeather",
+      "label":"NOAA/NHC Tropical Weather Service",
+      "type":"map-image",
+      "url":"https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/NHC_tropical_weather/MapServer",
+      "visible":true,
+      "opacity":0.85,
+      "group":"hurricanes"
+    },
+    {
+      "id":"activeHurricanes0",
+      "label":"Active Hurricanes / Positions",
+      "type":"feature",
+      "url":"https://services9.arcgis.com/RHVPKKiFTONKtxq3/arcgis/rest/services/Active_Hurricanes_v1/FeatureServer/0",
+      "visible":true,
+      "opacity":0.95,
+      "group":"hurricanes"
+    },
+    {
+      "id":"activeHurricanes1",
+      "label":"Active Hurricanes / Forecast Track",
+      "type":"feature",
+      "url":"https://services9.arcgis.com/RHVPKKiFTONKtxq3/arcgis/rest/services/Active_Hurricanes_v1/FeatureServer/1",
+      "visible":true,
+      "opacity":0.9,
+      "group":"hurricanes"
+    },
+    {
+      "id":"activeHurricanes2",
+      "label":"Active Hurricanes / Forecast Cone",
+      "type":"feature",
+      "url":"https://services9.arcgis.com/RHVPKKiFTONKtxq3/arcgis/rest/services/Active_Hurricanes_v1/FeatureServer/2",
+      "visible":true,
+      "opacity":0.55,
+      "group":"hurricanes"
+    },
+    {
+      "id":"usgsEarthquakes",
+      "label":"USGS M4.5+ Earthquakes Today",
+      "type":"geojson",
+      "url":"https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_day.geojson",
+      "visible":true,
+      "opacity":0.95,
+      "group":"earthquakes"
+    }
+  ]
+}
