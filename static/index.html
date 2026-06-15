@@ -80,6 +80,25 @@
             <label><input type="checkbox" id="toggleQuakes" checked> Earthquakes</label>
             <label><input type="checkbox" id="toggleEvents" checked> NASA Events</label>
             <label><input type="checkbox" id="toggleStorms" checked> Hurricanes</label>
+            <label><input type="checkbox" id="toggleRotation" checked> Revolving Globe</label>
+          </div>
+          <div class="mapControls">
+            <label>Base Layer
+              <select id="basemapSelect">
+                <option value="satellite" selected>Satellite Imagery</option>
+                <option value="hybrid">Imagery Hybrid</option>
+                <option value="topo-vector">Topographic</option>
+                <option value="streets-vector">Streets</option>
+                <option value="oceans">Oceans</option>
+                <option value="terrain">Terrain</option>
+                <option value="dark-gray-vector">Dark Gray</option>
+                <option value="gray-vector">Light Gray</option>
+              </select>
+            </label>
+            <label>Rotation Speed
+              <input id="rotationSpeed" type="range" min="0" max="100" value="30" />
+            </label>
+            <button id="resetGlobeBtn">Reset Globe View</button>
           </div>
         </div>
         <div class="globeFooter glass">

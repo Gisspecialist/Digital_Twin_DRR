@@ -1,31 +1,34 @@
-# Planetary Digital Twin: Weather, Hurricanes & Natural Disaster Monitoring
+# Planetary Digital Twin — Weather, Hurricanes & Natural Disasters
 
-This build uses the attached flood-inundation digital twin as the guide and upgrades the earlier weather dashboard into a **real 3D Earth digital twin prototype** with live API connections.
+This version was upgraded using the uploaded flood-inundation digital twin as the design/behavior guide.
 
-## What makes this version real
+## Key fixes in this version
 
-- **Real interactive 3D Earth globe** using ArcGIS Maps SDK for JavaScript `SceneView`.
-- **Live coordinate scan API** using FastAPI.
-- **Open-Meteo Forecast API** for temperature, humidity, wind, gusts, cloud cover, and precipitation.
-- **Open-Meteo Air Quality API** for PM2.5, PM10, AQI, ozone, nitrogen dioxide, carbon monoxide, and dust.
-- **Open-Meteo Marine API** for wave height, wave period, currents, sea-surface temperature, and sea level where available.
-- **Open-Meteo Flood API** for river discharge context where available.
-- **NASA EONET** for active natural disaster events.
-- **USGS Earthquake GeoJSON** for M4.5+ earthquakes.
-- **NOAA/NHC-compatible ArcGIS active hurricane layers** added directly to the globe when the public service is reachable.
-- **AI hazard triage score** that fuses live weather, flood, marine, air-quality, NASA EONET, and USGS proximity signals.
+- Real ArcGIS 3D globe with terrain/elevation enabled.
+- The globe now auto-revolves like the earlier digital twin app.
+- Rotation can be turned on/off from the dashboard.
+- Rotation speed control was added.
+- Base-layer options were added directly in the application:
+  - Satellite Imagery
+  - Imagery Hybrid
+  - Topographic
+  - Streets
+  - Oceans
+  - Terrain
+  - Dark Gray
+  - Light Gray
+- ArcGIS Basemap Gallery widget was added to the 3D view.
+- Existing live API-connected layers remain:
+  - USGS earthquakes
+  - NASA EONET disasters
+  - NOAA/NHC-compatible active hurricane layers through ArcGIS services
+  - Open-Meteo weather, air quality, marine and flood context through the backend
 
 ## Run locally
 
-Install Python dependencies:
-
 ```bash
+cd planetary-digital-twin-weather-real-v2
 pip install -r requirements.txt
-```
-
-Start the server:
-
-```bash
 uvicorn app.main:app --reload
 ```
 
@@ -35,62 +38,6 @@ Open:
 http://127.0.0.1:8000
 ```
 
-## How to use
+## Important note
 
-1. Wait for the real 3D Earth globe to load.
-2. Click anywhere on Earth to run a coordinate-based scan.
-3. Or enter latitude and longitude and click **Run Digital Twin Scan**.
-4. Use the toggles to switch earthquakes, NASA events, and hurricane layers on or off.
-5. Read the left and right panels for live weather, flood/marine context, API status, nearest hazards, and AI risk level.
-
-## API endpoints
-
-Health:
-
-```text
-/api/health
-```
-
-Coordinate scan:
-
-```text
-/api/digital-twin?lat=17.25&lng=-88.7667
-```
-
-Live event overlay proxy:
-
-```text
-/api/events
-```
-
-## Production deployment options
-
-### Render / Railway / Fly.io
-
-This is the easiest approach because the application has a Python backend.
-
-Start command:
-
-```bash
-uvicorn app.main:app --host 0.0.0.0 --port $PORT
-```
-
-### Docker
-
-```bash
-docker build -t planetary-digital-twin-weather-real .
-docker run -p 8000:8000 planetary-digital-twin-weather-real
-```
-
-## Important limitations
-
-This is a live operational prototype, not an official emergency warning system. For production emergency use, add:
-
-- Official authenticated agency feeds.
-- Backend database and historical archive.
-- Alert approval and audit workflow.
-- User accounts and role-based permissions.
-- Local radar, gauge, DEM/LiDAR, HEC-RAS, and hydrologic model integration.
-- Redundant hosting and observability.
-- Clear legal disclaimers and incident command operating procedures.
-
+This is a professional prototype connected to public APIs. It is not an official emergency warning system. For a production emergency platform, add authenticated agency feeds, persistence, monitoring, caching, user accounts, alert verification, and operational SOPs.

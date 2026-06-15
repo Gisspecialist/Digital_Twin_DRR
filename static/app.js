@@ -1,7 +1,11 @@
 const $ = (id) => document.getElementById(id);
 const fmt = (v, suffix = '', digits = 0) => (v === null || v === undefined || Number.isNaN(Number(v))) ? '--' : `${Number(v).toFixed(digits)}${suffix}`;
-let view, markerLayer, eonetLayer, stormLayerGroup = [], quakeLayer;
+let view, map, markerLayer, eonetLayer, stormLayerGroup = [], quakeLayer;
 let targetGraphic;
+let rotating = true;
+let rotationSpeed = 0.018;
+let rotationHandle = null;
+const defaultCamera = { position: { longitude: -66, latitude: 23, z: 17500000 }, tilt: 0, heading: 0 };
 
 function tickClock(){
   const now = new Date();
@@ -96,15 +100,15 @@ function addTargetMarker(lat, lng, level){
 
 function bootstrapArcGIS(){
   require([
-    'esri/Map','esri/views/SceneView','esri/layers/GraphicsLayer','esri/layers/GeoJSONLayer','esri/layers/FeatureLayer','esri/Graphic','esri/widgets/Legend','esri/widgets/Expand'
-  ], (Map, SceneView, GraphicsLayer, GeoJSONLayer, FeatureLayer, Graphic, Legend, Expand) => {
-    const map = new Map({ basemap: 'satellite', ground: 'world-elevation' });
+    'esri/Map','esri/views/SceneView','esri/layers/GraphicsLayer','esri/layers/GeoJSONLayer','esri/layers/FeatureLayer','esri/Graphic','esri/widgets/Legend','esri/widgets/Expand','esri/widgets/BasemapGallery'
+  ], (Map, SceneView, GraphicsLayer, GeoJSONLayer, FeatureLayer, Graphic, Legend, Expand, BasemapGallery) => {
+    map = new Map({ basemap: 'satellite', ground: 'world-elevation' });
     markerLayer = new GraphicsLayer({ title:'Digital Twin Target' });
     eonetLayer = new GraphicsLayer({ title:'NASA EONET Open Events', visible: true });
     view = new SceneView({
       container: 'viewDiv', map,
       qualityProfile: 'high',
-      camera: { position: { longitude: -66, latitude: 23, z: 17500000 }, tilt: 0, heading: 0 },
+      camera: defaultCamera,
       environment: { atmosphereEnabled: true, starsEnabled: true, lighting: { directShadowsEnabled: true, date: new Date() } },
       ui: { components: ['attribution'] }
     });
@@ -147,11 +151,16 @@ function bootstrapArcGIS(){
     const expandLegend = new Expand({ view, content: legend, expanded: false, expandTooltip:'Map legend' });
     view.ui.add(expandLegend, 'top-right');
 
+    const basemapGallery = new BasemapGallery({ view });
+    const expandBasemaps = new Expand({ view, content: basemapGallery, expanded: false, expandTooltip:'Base layer gallery' });
+    view.ui.add(expandBasemaps, 'top-right');
+
     view.when(() => {
       $('bootOverlay').style.opacity = 0;
       setTimeout(() => $('bootOverlay').style.display='none', 400);
       loadEventsOverlay(Graphic);
       runScan(17.25, -88.7667, false);
+      startGlobeRotation();
     });
 
     view.on('click', (event) => {
@@ -162,7 +171,29 @@ function bootstrapArcGIS(){
     $('toggleQuakes').addEventListener('change', e => quakeLayer.visible = e.target.checked);
     $('toggleEvents').addEventListener('change', e => eonetLayer.visible = e.target.checked);
     $('toggleStorms').addEventListener('change', e => stormLayerGroup.forEach(l => l.visible = e.target.checked));
+    $('toggleRotation').addEventListener('change', e => { rotating = e.target.checked; if(rotating) startGlobeRotation(); });
+    $('rotationSpeed').addEventListener('input', e => { rotationSpeed = Number(e.target.value) / 1700; });
+    $('basemapSelect').addEventListener('change', e => { map.basemap = e.target.value; });
+    $('resetGlobeBtn').addEventListener('click', () => {
+      rotating = true; $('toggleRotation').checked = true;
+      view.goTo({ camera: defaultCamera }, { duration: 900 }).catch(()=>{});
+    });
   });
+}
+
+function startGlobeRotation(){
+  if(rotationHandle) return;
+  const rotate = () => {
+    rotationHandle = requestAnimationFrame(rotate);
+    if(!view || !rotating || view.interacting || view.animation) return;
+    try{
+      const cam = view.camera.clone();
+      cam.position.longitude = ((cam.position.longitude + rotationSpeed + 540) % 360) - 180;
+      cam.heading = (cam.heading + rotationSpeed * 18) % 360;
+      view.camera = cam;
+    }catch(e){}
+  };
+  rotate();
 }
 
 async function loadEventsOverlay(GraphicClass){
