@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import asyncio
 import math
 import os
 import time
 from dataclasses import dataclass
 from typing import Any
+from pathlib import Path
 from urllib.parse import urlencode
 
 import httpx
@@ -14,12 +16,12 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 CACHE_TTL_SECONDS = int(os.getenv("CACHE_TTL_SECONDS", "600"))
-REQUEST_TIMEOUT_SECONDS = float(os.getenv("REQUEST_TIMEOUT_SECONDS", "12"))
+REQUEST_TIMEOUT_SECONDS = float(os.getenv("REQUEST_TIMEOUT_SECONDS", "5"))
 CORS_ORIGINS = [origin.strip() for origin in os.getenv("CORS_ORIGINS", "*").split(",") if origin.strip()]
 
 app = FastAPI(
     title="Planetary Weather, Hurricane and Disaster Digital Twin",
-    version="3.0.0",
+    version="4.0.0",
     description="Real 3D Earth digital twin API using Open-Meteo, NASA EONET, USGS and NOAA/NHC-compatible data layers.",
 )
 
@@ -31,7 +33,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+BASE_DIR = Path(__file__).resolve().parent.parent
+STATIC_DIR = BASE_DIR / "static"
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 _cache: dict[str, tuple[float, Any]] = {}
 
 
@@ -196,7 +200,7 @@ def compute_hazard_score(
 
 @app.get("/")
 async def index() -> FileResponse:
-    return FileResponse("static/index.html")
+    return FileResponse(STATIC_DIR / "index.html")
 
 
 @app.get("/api/health")
@@ -213,7 +217,7 @@ async def health() -> dict[str, Any]:
 @app.get("/api/digital-twin")
 async def digital_twin(lat: float = Query(..., ge=-90, le=90), lng: float = Query(..., ge=-180, le=180)) -> JSONResponse:
     lat, lng = clamp_coordinate(lat, lng)
-    key = f"digital-twin-v3:{lat:.3f}:{lng:.3f}"
+    key = f"digital-twin-v4:{lat:.3f}:{lng:.3f}"
     cached = cache_get(key)
     if cached:
         cached["cache"] = {"hit": True, "ttl_seconds": CACHE_TTL_SECONDS}
@@ -262,13 +266,16 @@ async def digital_twin(lat: float = Query(..., ge=-90, le=90), lng: float = Quer
     eonet_url = "https://eonet.gsfc.nasa.gov/api/v3/events?status=open&limit=100"
     usgs_url = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_day.geojson"
 
-    async with httpx.AsyncClient(headers={"User-Agent": "planetary-digital-twin-real/3.0"}) as client:
-        weather_ok, weather_data, weather_error = await fetch_json(client, weather_url)
-        air_ok, air_data, air_error = await fetch_json(client, air_url)
-        marine_ok, marine_data, marine_error = await fetch_json(client, marine_url)
-        flood_ok, flood_data, flood_error = await fetch_json(client, flood_url)
-        eonet_ok, eonet_data, eonet_error = await fetch_json(client, eonet_url)
-        usgs_ok, usgs_data, usgs_error = await fetch_json(client, usgs_url)
+    async with httpx.AsyncClient(headers={"User-Agent": "planetary-digital-twin-real/4.0"}) as client:
+        results = await asyncio.gather(
+            fetch_json(client, weather_url),
+            fetch_json(client, air_url),
+            fetch_json(client, marine_url),
+            fetch_json(client, flood_url),
+            fetch_json(client, eonet_url),
+            fetch_json(client, usgs_url),
+        )
+    (weather_ok, weather_data, weather_error), (air_ok, air_data, air_error), (marine_ok, marine_data, marine_error), (flood_ok, flood_data, flood_error), (eonet_ok, eonet_data, eonet_error), (usgs_ok, usgs_data, usgs_error) = results
 
     current = (weather_data or {}).get("current") or {}
     hourly = (weather_data or {}).get("hourly") or {}
@@ -378,9 +385,11 @@ async def live_events() -> JSONResponse:
     """Small proxy endpoint used by the front end to avoid browser CORS issues for live event overlays."""
     eonet_url = "https://eonet.gsfc.nasa.gov/api/v3/events?status=open&limit=100"
     usgs_url = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_day.geojson"
-    async with httpx.AsyncClient(headers={"User-Agent": "planetary-digital-twin-real/3.0"}) as client:
-        eonet_ok, eonet_data, eonet_error = await fetch_json(client, eonet_url)
-        usgs_ok, usgs_data, usgs_error = await fetch_json(client, usgs_url)
+    async with httpx.AsyncClient(headers={"User-Agent": "planetary-digital-twin-real/4.0"}) as client:
+        (eonet_ok, eonet_data, eonet_error), (usgs_ok, usgs_data, usgs_error) = await asyncio.gather(
+            fetch_json(client, eonet_url),
+            fetch_json(client, usgs_url),
+        )
     return JSONResponse({
         "api_status": {"nasa_eonet": {"online": eonet_ok, "error": eonet_error}, "usgs_earthquakes": {"online": usgs_ok, "error": usgs_error}},
         "eonet": eonet_data or {"events": []},
